@@ -28,3 +28,8 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- All AI/RAG logic lives in one server function, `src/lib/civic-ai.functions.ts`; keep it in one readable file because the team is learning.
+- Retrieval uses Postgres full-text search (`search_documents` SQL function), not embeddings, to keep the first version simple; switch to pgvector only when keyword search is clearly insufficient.
+- The AI must return JSON matching `ANSWER_SCHEMA`; citations are built server-side from the returned source numbers so links always point to real retrieved documents.
