@@ -36,3 +36,4 @@ use the editor.
 - Retire old catalog records via `is_active`, and clear stale vectors on content changes; historical sources stay available without affecting retrieval.
 - Merge lexical and semantic candidates with weighted RRF (10% keyword, 90% semantic, k=10); keep live paraphrase regressions so generic terms cannot displace the correct service.
 - The AI must return JSON matching `ANSWER_SCHEMA`; citations are built server-side from the returned source numbers so links always point to real retrieved documents.
+- Keep curated topic/FAQ starters in `src/lib/topics.ts` and browsing in `src/components/Topics.tsx`; pass selections through the existing Chat preset flow so there is only one question-submission path.

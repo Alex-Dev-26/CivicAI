@@ -11,13 +11,24 @@ type Message =
   | { role: "assistant"; answer: CivicAnswer }
   | { role: "error"; text: string };
 
-export function Chat({ preset }: { preset: { text: string; id: number } | null }) {
+export function Chat({
+  preset,
+  onBusyChange,
+}: {
+  preset: { text: string; id: number } | null;
+  onBusyChange?: (busy: boolean) => void;
+}) {
   const ask = useServerFn(askCivicAI);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    onBusyChange?.(loading);
+  }, [loading, onBusyChange]);
 
   async function send(question: string) {
     question = question.trim();
@@ -49,7 +60,10 @@ export function Chat({ preset }: { preset: { text: string; id: number } | null }
 
   // A popular topic was clicked -> send its question.
   useEffect(() => {
-    if (preset) void send(preset.text);
+    if (preset) {
+      sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      void send(preset.text);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preset?.id]);
 
@@ -58,7 +72,10 @@ export function Chat({ preset }: { preset: { text: string; id: number } | null }
   }, [messages, loading]);
 
   return (
-    <section className="flex h-[78vh] flex-col rounded-xl border border-border bg-card shadow-sm">
+    <section
+      ref={sectionRef}
+      className="flex h-[78vh] min-w-0 flex-col rounded-xl border border-border bg-card shadow-sm"
+    >
       <div className="border-b border-border px-5 py-3">
         <h2 className="font-serif text-lg font-bold">Разговор со CivicAI</h2>
       </div>
@@ -71,11 +88,17 @@ export function Chat({ preset }: { preset: { text: string; id: number } | null }
         )}
         {messages.map((m, i) =>
           m.role === "user" ? (
-            <div key={i} className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-2 text-primary-foreground">
+            <div
+              key={i}
+              className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-2 text-primary-foreground"
+            >
               {m.text}
             </div>
           ) : m.role === "error" ? (
-            <div key={i} className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+            <div
+              key={i}
+              className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive"
+            >
               {m.text}
             </div>
           ) : (
@@ -112,7 +135,13 @@ export function Chat({ preset }: { preset: { text: string; id: number } | null }
           className="min-h-[48px] resize-none bg-background"
           rows={1}
         />
-        <Button type="submit" size="icon" className="h-12 w-12 shrink-0" disabled={loading || !input.trim()} aria-label="Испрати">
+        <Button
+          type="submit"
+          size="icon"
+          className="h-12 w-12 shrink-0"
+          disabled={loading || !input.trim()}
+          aria-label="Испрати"
+        >
           <Send className="h-4 w-4" />
         </Button>
       </form>
@@ -125,7 +154,9 @@ function AnswerCard({ answer }: { answer: CivicAnswer }) {
   return (
     <div className="space-y-4">
       <p className="font-medium">{answer.summary}</p>
-      {answer.explanation && <p className="text-sm leading-relaxed text-foreground/85">{answer.explanation}</p>}
+      {answer.explanation && (
+        <p className="text-sm leading-relaxed text-foreground/85">{answer.explanation}</p>
+      )}
       <Section icon={FileText} title="Потребни документи" items={answer.required_documents} />
       <Section icon={CheckCircle2} title="Услови" items={answer.eligibility} />
       <Section icon={ListOrdered} title="Чекори" items={answer.steps} ordered />
@@ -138,7 +169,12 @@ function AnswerCard({ answer }: { answer: CivicAnswer }) {
             {answer.sources.map((s) => (
               <li key={s.number}>
                 [{s.number}] {s.title} —{" "}
-                <a href={s.source_url} target="_blank" rel="noreferrer" className="text-primary underline">
+                <a
+                  href={s.source_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline"
+                >
                   {s.source_name}
                 </a>
               </li>
@@ -150,7 +186,17 @@ function AnswerCard({ answer }: { answer: CivicAnswer }) {
   );
 }
 
-function Section({ icon: Icon, title, items, ordered }: { icon: typeof FileText; title: string; items: string[]; ordered?: boolean }) {
+function Section({
+  icon: Icon,
+  title,
+  items,
+  ordered,
+}: {
+  icon: typeof FileText;
+  title: string;
+  items: string[];
+  ordered?: boolean;
+}) {
   if (items.length === 0) return null;
   const List = ordered ? "ol" : "ul";
   return (

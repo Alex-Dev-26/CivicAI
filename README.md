@@ -46,16 +46,22 @@ Lovable AI Gateway (AI models, no API key needed in code).
 ### `src/routes/index.tsx` — the home page
 - Every file in `src/routes/` is a page. `index.tsx` is the page at `/`.
 - `head()` sets the browser tab title and the preview text for social media.
-- The left column explains CivicAI and shows **Popular topics** (`TOPICS` array).
-  Each topic has an example question. Clicking one calls `setPreset(...)`, which passes the question
-  to the chat.
+- The left column explains CivicAI and renders `<Topics />`: four draggable batches of topic tiles,
+  with clickable dots and arrow controls. Drag either way; batches wrap around.
+- **Види ги сите** opens a larger dialog with all 15 catalog categories. Choosing a category shows
+  its curated FAQ starters (1–4 questions, depending on the services in that category). These are
+  useful example questions, not measured popularity rankings or stored official answers.
+- Choosing a FAQ question closes the dialog and calls `setPreset(...)`, which automatically sends
+  the question through the existing chat. Questions are disabled while another answer is pending.
 - The right column renders `<Chat preset={preset} />`.
 
-To add a topic, add an object to `TOPICS`:
+To add a topic, add an object to `TOPICS` in `src/lib/topics.ts`:
 ```ts
-{ name: "Здравство", icon: Stethoscope, question: "Како да изберам матичен лекар?" },
+{ id: "new-topic", name: "Нова тема", icon: BookOpen, questions: ["Вашето прашање?"] },
 ```
-(also import the icon from `lucide-react`, and add documents about it — see section 8).
+(also import the icon from `lucide-react`, and add verified documents about it — see section 8).
+`src/components/Topics.tsx` handles the carousel, category selection and dialog; `TOPIC_BATCHES`
+groups the starters into pages of four without duplicating the data.
 
 ### `src/components/Chat.tsx` — the chat window
 State (data that changes) is kept with React `useState`:
@@ -146,7 +152,7 @@ last 6 conversation turns. Never trust data that comes from the browser.
 **B. The handler** does four steps:
 1. **Retrieve** — `searchDocuments(question)` embeds the question and finds the 6 best-matching documents.
 2. **Augment** — the documents are pasted into the prompt, numbered `[1]`, `[2]`, …
-3. **Generate** — the AI writes an answer using only those documents.
+3. **Generate** — the AI uses those documents for official facts and may add clearly labelled general guidance.
 4. **Cite** — the source numbers the AI used are turned into real links.
 
 These four steps *are* RAG.
@@ -209,8 +215,13 @@ const response = await generateChatCompletion({
 });
 ```
 
-- **`SYSTEM_PROMPT`** tells the AI: answer in Macedonian, use ONLY the sources, don't invent fees or
-  deadlines, say honestly if the sources don't contain the answer, list the source numbers used.
+- **`SYSTEM_PROMPT`** defines CivicAI's purpose: help citizens find verified government-service
+  information and navigate complex processes. It answers in Macedonian, uses sources for official
+  requirements, and never invents fees, deadlines or eligibility. It may use general knowledge and
+  reasoning instead of refusing simply because a topic is missing from the catalog. Unsupported
+  guidance must be marked **“Општа насока — не е потврдена со официјален извор”**, with practical
+  verification advice. Required-document and eligibility lists contain only sourced requirements;
+  general practical steps are allowed. Citations only refer to retrieved sources actually used.
 - **`userMessage`** looks like:
   ```text
   ИЗВОРИ:
@@ -261,11 +272,12 @@ npm run dev
 (Locally you need the project's environment variables; the AI and database work out of the box in Lovable.)
 
 ### Test manually
-1. Open the site, click a popular topic or type a question.
+1. Open the site, drag the topic tiles, check that the active dot changes, and open **Види ги сите**.
+   Choose a category, then a FAQ question; it should be sent immediately to the chat. Or type a question.
 2. Try: "Кој има право на детски додаток?", "Како да отворам ДООЕЛ?",
    "Сакам документ што покажува кој го поседува мојот стан.", or "Како да проверам дали сум здравствено осигуран?".
-   For something outside the catalog ("Како да добијам дозвола за космодром?") CivicAI should say it
-   doesn't have that information.
+   For something outside the catalog, try "Како да ги организирам документите пред посета на институција?".
+   CivicAI should offer clearly labelled general advice, not refuse or pretend that advice is verified law.
 
 ### Automated tests
 ```sh
@@ -273,7 +285,8 @@ bunx vitest run
 ```
 
 `src/test/civic-retrieval.test.ts` checks the requested 30–50 range, exactly 40 distinct official URLs,
-query embedding use, vector validation, batch ordering and keyword fallback. Opt-in live tests call
+query embedding use, vector validation, batch ordering and keyword fallback. `src/test/topics.test.tsx`
+checks category-dependent FAQ lists, exact question dispatch and blocking selections while busy. Opt-in live tests call
 real retrieval, so they consume embedding credits:
 ```sh
 CIVIC_LIVE_TESTS=true bunx vitest run src/test/civic-search.integration.test.ts
@@ -309,7 +322,9 @@ directly makes it keyword-searchable, but you must re-index it to restore meanin
 | Add a field to answers (e.g. "fees") | `ANSWER_SCHEMA` + `CivicAnswer` type + `AnswerCard` in `Chat.tsx` |
 | Retrieve more documents | `match_count: 6` in `searchDocuments` (SQL caps it at 10) |
 | Change ranking | New migration replacing `hybrid_search_documents`; run live regression tests |
-| Change home page text/topics | `src/routes/index.tsx` |
+| Change home page text | `src/routes/index.tsx` |
+| Change topic categories / FAQ starters | `src/lib/topics.ts` |
+| Change topic browsing and dialog | `src/components/Topics.tsx` |
 | Change colors/fonts | `src/styles.css` (and font link in `src/routes/__root.tsx`) |
 
 ---
@@ -323,9 +338,11 @@ src/
     index.tsx               Home page: intro + popular topics + chat
   components/
     Chat.tsx                Chat window, answer cards, sources box
+    Topics.tsx              Draggable topic batches, all-topic dialog and FAQ selection
     ui/                     Ready-made UI pieces (Button, Textarea, …)
   lib/
     civic-ai.functions.ts   ⭐ Backend: retrieval + AI call + citations
+    topics.ts               Catalog-aligned category and FAQ starters
   integrations/supabase/    Auto-generated database client & types (don't edit)
   generated/ai-gateway/     Auto-generated AI model types (don't edit)
   styles.css                Colors, fonts, design tokens
