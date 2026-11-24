@@ -2,7 +2,7 @@
 // Flow: question -> search documents in the database -> send question + documents to the AI -> return a structured answer.
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
-import { generateResponse, GatewayError } from "@lovable.dev/ai-gateway";
+import { generateChatCompletion, GatewayError } from "@lovable.dev/ai-gateway";
 import type { Database } from "@/integrations/supabase/types";
 
 // ---------- Types shared with the frontend ----------
@@ -91,11 +91,14 @@ export const askCivicAI = createServerFn({ method: "POST" })
     // 3. Generate
     let response;
     try {
-      response = await generateResponse({
-        model: "openai/gpt-6-astra",
-        instructions: SYSTEM_PROMPT,
-        input: [...data.history, { role: "user", content: userMessage }],
-        text: { format: { type: "json_schema", name: "civic_answer", schema: ANSWER_SCHEMA, strict: true } },
+      response = await generateChatCompletion({
+        model: "google/gemini-3.8-flash",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          ...data.history,
+          { role: "user", content: userMessage },
+        ],
+        response_format: { type: "json_schema", json_schema: { name: "civic_answer", schema: ANSWER_SCHEMA, strict: true } },
       });
     } catch (err) {
       if (err instanceof GatewayError) {
@@ -106,11 +109,8 @@ export const askCivicAI = createServerFn({ method: "POST" })
       throw new Error("AI асистентот моментално не е достапен. Обидете се повторно.");
     }
 
-    // The AI's text lives inside response.output -> message -> output_text.
-    const text = response.output
-      .flatMap((item) => (item.type === "message" ? item.content : []))
-      .map((c) => (c.type === "output_text" ? c.text : ""))
-      .join("");
+    // The AI's text lives in the first choice's message content.
+    const text = response.choices[0]?.message.content ?? "";
     const parsed = JSON.parse(text) as Omit<CivicAnswer, "sources"> & { source_numbers: number[] };
 
     // 4. Citations: turn the numbers the AI used back into real document links.

@@ -29,7 +29,7 @@ CivicAI has three parts:
 | Frontend | React page the user sees | `src/routes/index.tsx`, `src/components/Chat.tsx` |
 | Backend | One **server function** that runs on the server, never in the browser | `src/lib/civic-ai.functions.ts` |
 | Database | Postgres (Lovable Cloud) with a `documents` table + a search function | `drizzle/migrations/0000_create_documents_and_search.sql` |
-| AI model | `openai/gpt-6-astra`, called through the Lovable AI Gateway | used inside `civic-ai.functions.ts` |
+| AI model | `google/gemini-3.8-flash`, called through the Lovable AI Gateway | used inside `civic-ai.functions.ts` |
 
 **Why a server function?** The AI key and the database logic must stay secret. Code in a server
 function runs only on the server, so the browser never sees the key. The browser just "calls" the
@@ -180,11 +180,14 @@ upgrade to embeddings (pgvector) for meaning-based search — only `searchDocume
 
 The call (simplified):
 ```ts
-const response = await generateResponse({
-  model: "openai/gpt-6-astra",
-  instructions: SYSTEM_PROMPT,                         // the rules
-  input: [...history, { role: "user", content: userMessage }],
-  text: { format: { type: "json_schema", name: "civic_answer", schema: ANSWER_SCHEMA, strict: true } },
+const response = await generateChatCompletion({
+  model: "google/gemini-3.8-flash",
+  messages: [
+    { role: "system", content: SYSTEM_PROMPT },        // the rules
+    ...history,
+    { role: "user", content: userMessage },
+  ],
+  response_format: { type: "json_schema", json_schema: { name: "civic_answer", schema: ANSWER_SCHEMA, strict: true } },
 });
 ```
 
