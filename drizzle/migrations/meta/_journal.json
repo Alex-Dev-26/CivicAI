@@ -22,6 +22,41 @@
       "when": 1795484815278,
       "tag": "0002_private_catalog_imports",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795485569144,
+      "tag": "0003_scoped_catalog_load",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795485635277,
+      "tag": "0004_close_catalog_maintenance_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795485679337,
+      "tag": "0005_balance_hybrid_relevance",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795485790162,
+      "tag": "0006_semantic_paraphrase_priority",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795485944594,
+      "tag": "0007_read_only_citizen_catalog_grants",
+      "breakpoints": true
     }
   ]
 }

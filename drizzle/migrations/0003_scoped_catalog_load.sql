@@ -1,0 +1,3 @@
+GRANT INSERT ON public.documents TO authenticated;
+CREATE POLICY "One-time official catalog load" ON public.documents FOR INSERT TO authenticated WITH CHECK (auth.uid()='afe6fade-ebd9-49af-bfb1-ab21eb12f2d6'::uuid AND source_url LIKE 'https://uslugi.gov.mk/service/%' AND embedding IS NOT NULL AND embedding_model='google/gemini-embedding-2');
+COMMENT ON TABLE public.catalog_imports IS 'DEPRECATED: file-backed catalog loading uses one-time account-scoped Data API access; not used by application.';
