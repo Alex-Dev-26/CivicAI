@@ -31,5 +31,6 @@ use the editor.
 
 ## Project rules
 - All AI/RAG logic lives in one server function, `src/lib/civic-ai.functions.ts`; keep it in one readable file because the team is learning.
-- Retrieval uses Postgres full-text search (`search_documents` SQL function), not embeddings, to keep the first version simple; switch to pgvector only when keyword search is clearly insufficient.
+- Retrieval uses `hybrid_search_documents`: Postgres prefix full-text search plus 768-dimensional Gemini Embedding 2 vectors fused with reciprocal rank; keyword-only fallback keeps answers available during embedding outages.
+- Maintain the official catalog offline using `scripts/catalog.ts`; never crawl sources or write embeddings during citizen requests, so public endpoints cannot modify catalog data.
 - The AI must return JSON matching `ANSWER_SCHEMA`; citations are built server-side from the returned source numbers so links always point to real retrieved documents.

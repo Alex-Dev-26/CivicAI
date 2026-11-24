@@ -14,36 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      catalog_imports: {
+        Row: {
+          created_at: string
+          id: string
+          imported_count: number
+          request_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imported_count?: number
+          request_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imported_count?: number
+          request_id?: number
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           category: string
           content: string
           created_at: string
+          embedding: string | null
+          embedding_model: string | null
           id: string
+          is_active: boolean
           search_vector: unknown
           source_name: string
           source_url: string
           title: string
+          verified_at: string | null
         }
         Insert: {
           category: string
           content: string
           created_at?: string
+          embedding?: string | null
+          embedding_model?: string | null
           id?: string
+          is_active?: boolean
           search_vector?: unknown
           source_name: string
           source_url: string
           title: string
+          verified_at?: string | null
         }
         Update: {
           category?: string
           content?: string
           created_at?: string
+          embedding?: string | null
+          embedding_model?: string | null
           id?: string
+          is_active?: boolean
           search_vector?: unknown
           source_name?: string
           source_url?: string
           title?: string
+          verified_at?: string | null
         }
         Relationships: []
       }
@@ -52,6 +85,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      hybrid_search_documents: {
+        Args: { match_count?: number; query: string; query_embedding?: string }
+        Returns: {
+          category: string
+          content: string
+          id: string
+          rank: number
+          source_name: string
+          source_url: string
+          title: string
+        }[]
+      }
       search_documents: {
         Args: { match_count?: number; query: string }
         Returns: {
