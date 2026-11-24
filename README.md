@@ -130,7 +130,8 @@ open. Confirm changing fees, deadlines and eligibility with the institution befo
 documents are public information. Citizen accounts and anonymous visitors cannot insert, edit or
 delete records. Catalog loading is a trusted offline maintenance action (section 8). The reviewed
 indexed snapshot is kept in the **private** `civic-catalog` storage bucket; signed-in accounts can
-read it, but there is no citizen upload permission. The temporary import-only account permission
+read only snapshots they uploaded (`owner_id` matches their authenticated user ID). Snapshots without
+an owner remain accessible only to trusted privileged maintenance, and there is no citizen upload permission. The temporary import-only account permission
 was revoked immediately after loading. `catalog_imports` is a deprecated, unused import experiment;
 the application does not read or write it.
 
